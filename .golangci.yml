@@ -16,7 +16,9 @@ linters:
 
 issues:
   exclude-rules:
-    # Test helpers intentionally ignore some errors for brevity.
+    # Test helpers intentionally ignore some errors and use fixed-signature
+    # HTTP/RPC callbacks whose unused parameters cannot be dropped.
     - path: _test\.go
       linters:
         - errcheck
+        - revive

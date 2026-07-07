@@ -41,7 +41,7 @@ type Map struct {
 
 	Selements  []MapSelement  `json:"selements,omitempty"`
 	Links      []MapLink      `json:"links,omitempty"`
-	Urls       []MapUrl       `json:"urls,omitempty"`
+	Urls       []MapURL       `json:"urls,omitempty"`
 	Users      []MapUser      `json:"users,omitempty"`
 	UserGroups []MapUserGroup `json:"userGroups,omitempty"`
 	Shapes     any            `json:"shapes,omitempty"`
@@ -77,8 +77,8 @@ type MapLink struct {
 	Label       string `json:"label,omitempty"`
 }
 
-// MapUrl is a URL associated with a map.
-type MapUrl struct {
+// MapURL is a URL associated with a map.
+type MapURL struct {
 	SysmapURLID string `json:"sysmapurlid,omitempty"`
 	Name        string `json:"name,omitempty"`
 	URL         string `json:"url,omitempty"`
