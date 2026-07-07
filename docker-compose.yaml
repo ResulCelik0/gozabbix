@@ -1,6 +1,6 @@
 services:
   postgresql-server:
-    image: postgres:latest
+    image: postgres:17-alpine
     container_name: postgresql-server
     restart: unless-stopped
     environment:
@@ -9,15 +9,21 @@ services:
       POSTGRES_DB: zabbix
     volumes:
       - postgresql-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zabbix -d zabbix"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - zabnet
 
   zabbix-server:
-    image: zabbix/zabbix-server-pgsql:latest
+    image: zabbix/zabbix-server-pgsql:alpine-7.4-latest
     container_name: zabbix-server
     restart: unless-stopped
     depends_on:
-      - postgresql-server
+      postgresql-server:
+        condition: service_healthy
     environment:
       DB_SERVER_HOST: postgresql-server
       POSTGRES_USER: zabbix
@@ -30,17 +36,17 @@ services:
       - zabbix-snmptraps-data:/var/lib/zabbix/snmptraps
       - zabbix-export-data:/var/lib/zabbix/export
     networks:
-      zabnet:
-        
-       
-  
+      - zabnet
+
   zabbix-web-nginx-pgsql:
-    image: zabbix/zabbix-web-nginx-pgsql:latest
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-7.4-latest
     container_name: zabbix-web
     restart: unless-stopped
     depends_on:
-      - postgresql-server
-      - zabbix-server
+      postgresql-server:
+        condition: service_healthy
+      zabbix-server:
+        condition: service_started
     environment:
       DB_SERVER_HOST: postgresql-server
       POSTGRES_USER: zabbix
@@ -52,15 +58,21 @@ services:
       - "8080:8080"
     volumes:
       - zabbix-web-data:/usr/share/zabbix
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/api_jsonrpc.php || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     networks:
       - zabnet
 
   zabbix-agent:
-    image: zabbix/zabbix-agent:latest
+    image: zabbix/zabbix-agent:alpine-7.4-latest
     container_name: zabbix-agent
     restart: unless-stopped
     depends_on:
-      - zabbix-server
+      zabbix-server:
+        condition: service_started
     environment:
       ZBX_HOSTNAME: "zabbix-server"
       ZBX_SERVER_HOST: zabbix-server
