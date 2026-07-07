@@ -1,0 +1,108 @@
+package gozabbix
+
+import "context"
+
+// SLAService wraps the "sla" API namespace.
+type SLAService struct{ client *Client }
+
+// SLA returns the sla service.
+func (c *Client) SLA() *SLAService { return &SLAService{c} }
+
+// SLA object (Zabbix 7.x).
+// https://www.zabbix.com/documentation/current/en/manual/api/reference/sla/object
+type SLA struct {
+	SLAID         string `json:"slaid,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Period        string `json:"period,omitempty"`
+	SLO           string `json:"slo,omitempty"`
+	EffectiveDate string `json:"effective_date,omitempty"`
+	Timezone      string `json:"timezone,omitempty"`
+	Status        string `json:"status,omitempty"`
+	Description   string `json:"description,omitempty"`
+
+	ServiceTags       []SLAServiceTag       `json:"service_tags,omitempty"`
+	Schedule          []SLASchedule         `json:"schedule,omitempty"`
+	ExcludedDowntimes []SLAExcludedDowntime `json:"excluded_downtimes,omitempty"`
+}
+
+// SLAServiceTag associates services with an SLA by tag.
+type SLAServiceTag struct {
+	Tag      string `json:"tag,omitempty"`
+	Operator string `json:"operator,omitempty"`
+	Value    string `json:"value,omitempty"`
+}
+
+// SLASchedule defines a weekly schedule period for an SLA.
+type SLASchedule struct {
+	PeriodFrom string `json:"period_from,omitempty"`
+	PeriodTo   string `json:"period_to,omitempty"`
+}
+
+// SLAExcludedDowntime is a planned downtime excluded from SLA calculation.
+type SLAExcludedDowntime struct {
+	Name       string `json:"name,omitempty"`
+	PeriodFrom string `json:"period_from,omitempty"`
+	PeriodTo   string `json:"period_to,omitempty"`
+}
+
+// SLAGetParams are the parameters for sla.get.
+type SLAGetParams struct {
+	GetParams
+	SLAIDs                  []string `json:"slaids,omitempty"`
+	ServiceIDs              []string `json:"serviceids,omitempty"`
+	SelectSchedule          any      `json:"selectSchedule,omitempty"`
+	SelectExcludedDowntimes any      `json:"selectExcludedDowntimes,omitempty"`
+	SelectServiceTags       any      `json:"selectServiceTags,omitempty"`
+}
+
+// Get retrieves SLAs matching params.
+// https://www.zabbix.com/documentation/current/en/manual/api/reference/sla/get
+func (s *SLAService) Get(ctx context.Context, params SLAGetParams) ([]SLA, error) {
+	var out []SLA
+	err := s.client.Call(ctx, "sla.get", params, &out)
+	return out, err
+}
+
+// Create creates SLAs and returns the new SLA ids.
+func (s *SLAService) Create(ctx context.Context, items ...SLA) ([]string, error) {
+	var res struct {
+		IDs []string `json:"slaids"`
+	}
+	err := s.client.Call(ctx, "sla.create", items, &res)
+	return res.IDs, err
+}
+
+// Update updates SLAs and returns the affected SLA ids.
+func (s *SLAService) Update(ctx context.Context, items ...SLA) ([]string, error) {
+	var res struct {
+		IDs []string `json:"slaids"`
+	}
+	err := s.client.Call(ctx, "sla.update", items, &res)
+	return res.IDs, err
+}
+
+// Delete deletes SLAs by id and returns the deleted SLA ids.
+func (s *SLAService) Delete(ctx context.Context, ids ...string) ([]string, error) {
+	var res struct {
+		IDs []string `json:"slaids"`
+	}
+	err := s.client.Call(ctx, "sla.delete", ids, &res)
+	return res.IDs, err
+}
+
+// SLAGetSLIParams are the parameters for sla.getsli.
+type SLAGetSLIParams struct {
+	SLAID      string   `json:"slaid"`
+	ServiceIDs []string `json:"serviceids,omitempty"`
+	Periods    int      `json:"periods,omitempty"`
+	PeriodFrom int64    `json:"period_from,omitempty"`
+	PeriodTo   int64    `json:"period_to,omitempty"`
+}
+
+// GetSLI returns SLI (service level indicator) data for an SLA.
+// https://www.zabbix.com/documentation/current/en/manual/api/reference/sla/getsli
+func (s *SLAService) GetSLI(ctx context.Context, params SLAGetSLIParams) (any, error) {
+	var out any
+	err := s.client.Call(ctx, "sla.getsli", params, &out)
+	return out, err
+}
