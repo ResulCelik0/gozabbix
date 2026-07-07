@@ -1,3 +1,3 @@
-module github.com/ResulCelik0/gozabbix
+module github.com/Deepreo/gozabbix
 
-go 1.22.0
+go 1.26.3
